@@ -149,6 +149,8 @@ namespace DataStructures.Implementation
                 throw new NotSupportedException();
             if (items == null)
                 throw new ArgumentNullException(nameof(items));
+            if (index > Count)
+                throw new ArgumentOutOfRangeException(nameof(index));
 
             var itemsList = items.ToList();
             var itemsCount = itemsList.Count();
@@ -160,30 +162,8 @@ namespace DataStructures.Implementation
             {
                 Items[currentIndex++] = item;
             }
-        }
 
-        public void Copy(int fromIndex, int toIndex, int copyCount)
-        {
-            if (fromIndex < 0 || fromIndex > LastItemIndex)
-                throw new ArgumentOutOfRangeException(nameof(fromIndex));
-            if (toIndex < 0 || toIndex > LastItemIndex)
-                throw new ArgumentOutOfRangeException(nameof(toIndex));
-            if (copyCount < 0 || copyCount + toIndex > Items.Length || copyCount + fromIndex > Items.Length)
-                throw new ArgumentOutOfRangeException(nameof(copyCount));
-            
-            EnsureCapacity(this.Count + copyCount);
-
-            var itemsToCopy = new List<T>();
-            for (int i = fromIndex; i < fromIndex + copyCount; i++)
-            {
-                itemsToCopy.Add(Items[i]);
-            }
-
-            var currentCopyIndex = toIndex;
-            foreach (var item in itemsToCopy)
-            {
-                Items[currentCopyIndex++] = item;
-            }
+            LastItemIndex += itemsCount;
         }
 
         public void AddRange(IEnumerable<T> items)
@@ -196,6 +176,49 @@ namespace DataStructures.Implementation
             foreach (var item in items)
             {
                 this.Add(item);
+            }
+        }
+
+        public void RemoveRange(int index, int length)
+        {
+            if (IsReadOnly)
+                throw new NotSupportedException();
+            if (index > LastItemIndex)
+                throw new ArgumentOutOfRangeException(nameof(index));
+            if (index + length > this.Count)
+                throw new ArgumentOutOfRangeException(nameof(length));
+
+            Copy(index + length, index, length);
+
+            for (int i = index; i < index + length; i++)
+            {
+                Items[i] = default;
+            }
+
+            LastItemIndex -= length;
+        }
+
+        public void Copy(int fromIndex, int toIndex, int length)
+        {
+            if (fromIndex < 0 || fromIndex > LastItemIndex)
+                throw new ArgumentOutOfRangeException(nameof(fromIndex));
+            if (toIndex < 0 || toIndex > LastItemIndex)
+                throw new ArgumentOutOfRangeException(nameof(toIndex));
+            if (length < 0 || length + toIndex > Items.Length || length + fromIndex > Items.Length)
+                throw new ArgumentOutOfRangeException(nameof(length));
+
+            EnsureCapacity(this.Count + length);
+
+            var itemsToCopy = new List<T>();
+            for (int i = fromIndex; i < fromIndex + length; i++)
+            {
+                itemsToCopy.Add(Items[i]);
+            }
+
+            var currentCopyIndex = toIndex;
+            foreach (var item in itemsToCopy)
+            {
+                Items[currentCopyIndex++] = item;
             }
         }
 

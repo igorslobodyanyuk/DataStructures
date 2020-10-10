@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 
 namespace DataStructures.Implementation
 {
@@ -35,6 +35,8 @@ namespace DataStructures.Implementation
 
         public StringBuilder Insert(int index, string str, int instances = 1)
         {
+            if (index > String.Count)
+                throw new ArgumentOutOfRangeException(nameof(index));
             if (instances < 0)
                 throw new ArgumentOutOfRangeException(nameof(instances));
             if (instances == 0)
@@ -53,11 +55,39 @@ namespace DataStructures.Implementation
 
         public StringBuilder Remove(int startIndex, int length)
         {
+            if (startIndex > String.Count)
+                throw new ArgumentOutOfRangeException(nameof(startIndex));
+            if (startIndex + length > String.Count)
+                throw new ArgumentOutOfRangeException(nameof(length));
+
+            String.RemoveRange(startIndex, length);
+
             return this;
         }
 
         public StringBuilder Replace(string s1, string s2)
         {
+            if (s1 == null || s2 == null)
+                return this;
+
+            var replacementIndexes = new List<int>();
+            var replacementArray = s2.ToCharArray();
+            for (int i = 0; i < String.Count; i++)
+            {
+                if (IsSubstringEqual(String, i, replacementArray))
+                {
+                    replacementIndexes.Add(i);
+                }
+            }
+
+            // Reverse the order in order not to affect indexes for replacement.
+            // Suboptimal solution. Has plenty of room for improvement.
+            foreach (var replacementIndex in replacementIndexes.OrderByDescending(i => i))
+            {
+                String.RemoveRange(replacementIndex, s2.Length);
+                String.InsertRange(replacementIndex, s2);
+            }
+
             return this;
         }
 
@@ -72,6 +102,20 @@ namespace DataStructures.Implementation
         public override string ToString()
         {
             return new string(String.ToArray());
+        }
+
+        private bool IsSubstringEqual(IList<char> source, int startIndex, IList<char> target)
+        {
+            if (startIndex + target.Count > source.Count)
+                throw new ArgumentOutOfRangeException();
+
+            for (int i = 0; i < target.Count; i++)
+            {
+                if (source[i + startIndex] != target[i])
+                    return false;
+            }
+
+            return true;
         }
     }
 }
