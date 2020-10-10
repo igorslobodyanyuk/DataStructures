@@ -11,7 +11,7 @@ namespace DataStructures.Implementation
         private T[] Items { get; set; }
         private int LastItemIndex { get; set; } = -1;
 
-        public int Count => Math.Max(LastItemIndex, 0);
+        public int Count => LastItemIndex + 1;
         public bool IsReadOnly { get; } = false;
 
         public ArrayList()
@@ -50,7 +50,7 @@ namespace DataStructures.Implementation
             if (IsReadOnly)
                 throw new NotSupportedException();
             
-            ExpandSpaceForNewItemIfNeeded();
+            this.EnsureCapacity(LastItemIndex + 1);
 
             Items[++LastItemIndex] = item;
         }
@@ -118,8 +118,8 @@ namespace DataStructures.Implementation
                 throw new NotSupportedException();
             if (this.Count < index)
                 throw new ArgumentOutOfRangeException(nameof(index));
-
-            ExpandSpaceForNewItemIfNeeded();
+            
+            Copy(index, index + 1, 1);
 
             for (int i = index + 1; i < LastItemIndex; i++)
             {
@@ -128,7 +128,7 @@ namespace DataStructures.Implementation
 
             Items[index] = item;
         }
-
+        
         public void RemoveAt(int index)
         {
             if (IsReadOnly)
@@ -140,6 +140,76 @@ namespace DataStructures.Implementation
             for (int i = index; i < LastItemIndex; i++)
             {
                 Items[i] = Items[i + 1];
+            }
+        }
+
+        public void InsertRange(int index, IEnumerable<T> items)
+        {
+            if (IsReadOnly)
+                throw new NotSupportedException();
+            if (items == null)
+                throw new ArgumentNullException(nameof(items));
+
+            var itemsList = items.ToList();
+            var itemsCount = itemsList.Count();
+
+            Copy(index, index + itemsCount, itemsCount);
+
+            var currentIndex = index;
+            foreach (var item in items)
+            {
+                Items[currentIndex++] = item;
+            }
+        }
+
+        public void Copy(int fromIndex, int toIndex, int copyCount)
+        {
+            if (fromIndex < 0 || fromIndex > LastItemIndex)
+                throw new ArgumentOutOfRangeException(nameof(fromIndex));
+            if (toIndex < 0 || toIndex > LastItemIndex)
+                throw new ArgumentOutOfRangeException(nameof(toIndex));
+            if (copyCount < 0 || copyCount + toIndex > Items.Length || copyCount + fromIndex > Items.Length)
+                throw new ArgumentOutOfRangeException(nameof(copyCount));
+            
+            EnsureCapacity(this.Count + copyCount);
+
+            var itemsToCopy = new List<T>();
+            for (int i = fromIndex; i < fromIndex + copyCount; i++)
+            {
+                itemsToCopy.Add(Items[i]);
+            }
+
+            var currentCopyIndex = toIndex;
+            foreach (var item in itemsToCopy)
+            {
+                Items[currentCopyIndex++] = item;
+            }
+        }
+
+        public void AddRange(IEnumerable<T> items)
+        {
+            if (IsReadOnly)
+                throw new NotSupportedException();
+            if (items == null)
+                throw new ArgumentNullException(nameof(items));
+
+            foreach (var item in items)
+            {
+                this.Add(item);
+            }
+        }
+
+        public void EnsureCapacity(int capacity)
+        {
+            if (capacity > Items.Length)
+            {
+                var newItems = new T[ClosestPowerOfTwo(capacity)];
+                for (int i = 0; i < Items.Length; i++)
+                {
+                    newItems[i] = Items[i];
+                }
+
+                Items = newItems;
             }
         }
 
@@ -155,20 +225,6 @@ namespace DataStructures.Implementation
             while (current < value)
                 current *= 2;
             return current;
-        }
-
-        private void ExpandSpaceForNewItemIfNeeded()
-        {
-            if (LastItemIndex == Items.Length - 1)
-            {
-                var newItems = new T[ClosestPowerOfTwo(Items.Length + 1)];
-                for (int i = 0; i < Items.Length; i++)
-                {
-                    newItems[i] = Items[i];
-                }
-
-                Items = newItems;
-            }
         }
     }
 }
