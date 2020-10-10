@@ -1,8 +1,7 @@
-﻿using System;
-
 namespace DataStructures.Implementation
 {
-    public class Class1
+    public class StringBuilder
     {
+        
     }
 }
