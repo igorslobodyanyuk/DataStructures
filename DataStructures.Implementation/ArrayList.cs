@@ -50,16 +50,7 @@ namespace DataStructures.Implementation
             if (IsReadOnly)
                 throw new NotSupportedException();
             
-            if (LastItemIndex == Items.Length - 1)
-            {
-                var newItems = new T[ClosestPowerOfTwo(Items.Length + 1)];
-                for (int i = 0; i < Items.Length; i++)
-                {
-                    newItems[i] = Items[i];
-                }
-                
-                Items = newItems;
-            }
+            ExpandSpaceForNewItemIfNeeded();
 
             Items[++LastItemIndex] = item;
         }
@@ -84,37 +75,78 @@ namespace DataStructures.Implementation
                 throw new ArgumentNullException(nameof(array));
             if (arrayIndex < 0)
                 throw new ArgumentOutOfRangeException(nameof(array), arrayIndex, "Invalid index");
-            
-            foreach (var item in array)
+            if (arrayIndex + this.Count > array.Length)
+                throw new ArgumentException();
+
+            var i = arrayIndex;
+            foreach (var item in this)
             {
-                
+                array[i++] = item;
             }
         }
 
         public bool Remove(T item)
         {
-            throw new System.NotImplementedException();
+            if (IsReadOnly)
+                throw new NotSupportedException();
+
+            var index = this.IndexOf(item);
+            if (index == -1)
+                return false;
+
+            RemoveAt(index);
+
+            return true;
         }
 
         public int IndexOf(T item)
         {
-            throw new NotImplementedException();
+            var comparer = Comparer<T>.Default;
+            for (var index = 0; index < Items.Length; index++)
+            {
+                var currentItem = Items[index];
+                if (comparer.Compare(currentItem, item) == 0)
+                    return index;
+            }
+
+            return -1;
         }
 
         public void Insert(int index, T item)
         {
-            throw new NotImplementedException();
+            if (IsReadOnly)
+                throw new NotSupportedException();
+            if (this.Count < index)
+                throw new ArgumentOutOfRangeException(nameof(index));
+
+            ExpandSpaceForNewItemIfNeeded();
+
+            for (int i = index + 1; i < LastItemIndex; i++)
+            {
+                Items[i] = Items[i - 1];
+            }
+
+            Items[index] = item;
         }
 
         public void RemoveAt(int index)
         {
-            throw new NotImplementedException();
+            if (IsReadOnly)
+                throw new NotSupportedException();
+            if (index > LastItemIndex)
+                throw new ArgumentOutOfRangeException(nameof(index));
+
+            LastItemIndex--;
+            for (int i = index; i < LastItemIndex; i++)
+            {
+                Items[i] = Items[i + 1];
+            }
         }
 
         public T this[int index]
         {
-            get => throw new NotImplementedException();
-            set => throw new NotImplementedException();
+            get => Items[index];
+            set => Items[index] = value;
         }
 
         private int ClosestPowerOfTwo(int value)
@@ -123,6 +155,20 @@ namespace DataStructures.Implementation
             while (current < value)
                 current *= 2;
             return current;
+        }
+
+        private void ExpandSpaceForNewItemIfNeeded()
+        {
+            if (LastItemIndex == Items.Length - 1)
+            {
+                var newItems = new T[ClosestPowerOfTwo(Items.Length + 1)];
+                for (int i = 0; i < Items.Length; i++)
+                {
+                    newItems[i] = Items[i];
+                }
+
+                Items = newItems;
+            }
         }
     }
 }
